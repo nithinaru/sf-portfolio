@@ -1,0 +1,1104 @@
+@import "tailwindcss";
+
+html {
+  background: #fff;
+  color: #141414;
+}
+
+/* ------------------------------------------------------------------ */
+/* the page (see pages/index.tsx)                                      */
+/* ------------------------------------------------------------------ */
+
+/* how far the colour has travelled along a line; registered so it animates */
+@property --o {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+/* the whole page is one window-sized frame: nothing scrolls */
+.v2 {
+  --ink: #141414;
+  --blue: #1f4fff; /* cobalt: the guides, the link lines, the selection */
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  /* how big the flowers along the bottom are drawn: smaller in a short window */
+  --u: clamp(0.55, 100vh / 840px, 1);
+  /* the same top and bottom, so the text sits in the middle of the window;
+     the flowers stay shorter than this under the text */
+  padding: clamp(28px, 7vh, 72px) 24px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--font-text), "Iowan Old Style", Georgia, serif;
+  /* --fit is set by the page when the text would otherwise overflow */
+  font-size: calc(
+    clamp(15px, min(1.1vw + 13px, 2.6vh), 22px) *
+    var(--scale, 1) *
+    var(--fit, 1)
+  );
+  line-height: 1.55;
+  font-synthesis: none;
+}
+
+.v2 ::selection {
+  background: var(--blue);
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+
+.v2-column {
+  width: min(632px, 100%);
+}
+
+/* the name, with where i am tucked under it */
+.v2 .head {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.v2 h1 {
+  width: fit-content;
+  font: inherit;
+  font-size: 2.1em;
+  /* tall enough to hold the tails of y and the like: the guides are drawn
+     round this box, and shouldn't cut through them */
+  line-height: 1.32;
+  letter-spacing: -0.015em;
+}
+
+/*
+ * the pieces sit edge to edge (the gaps are real spaces and padding), each as
+ * tall as the text's own highlight, so a selection runs across unbroken.
+ */
+.v2 .where {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 0.7em;
+  line-height: 1.5;
+}
+
+.v2 .where .tx {
+  white-space: pre;
+}
+
+.v2 .where :is(.sign, .coords) {
+  align-self: stretch;
+  box-sizing: content-box;
+  padding: 0.085em 0.36em 0.085em 0;
+  margin: -0.085em 0;
+}
+
+.v2 .where .sign {
+  height: auto;
+}
+
+.v2 .where .sign:last-child {
+  padding-right: 0.1em;
+  padding-left: 0.1em;
+}
+
+/* latitude over longitude, small and heavy, between arrows */
+.v2 .coords {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  font-family: var(--font-label), ui-sans-serif, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.v2 .coords span {
+  font-size: 0.44em;
+  line-height: 1.2;
+}
+
+/*
+ * the text box round the name: a cobalt outline, a handle on each corner,
+ * and its size on a chip above (written in by labelLinks). it isn't part of
+ * the opening: once that's over it is dragged out from its top-left corner,
+ * then the handles land, then the chip.
+ */
+.v2 .name-box {
+  position: absolute;
+  inset: 0.04em -0.14em 0;
+  border: 1px solid var(--blue);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.v2[data-stage="settled"] .name-box {
+  visibility: visible;
+  /* the negative insets leave room for the handles and the chip */
+  animation: box-drag 420ms cubic-bezier(0.3, 0, 0.2, 1) 180ms both;
+}
+
+@keyframes box-drag {
+  from {
+    clip-path: inset(-30px 100% 100% -10px);
+  }
+  to {
+    clip-path: inset(-30px -10px -10px -10px);
+  }
+}
+
+.v2[data-stage="settled"] .name-box i {
+  animation: box-pop 220ms cubic-bezier(0.3, 1.6, 0.5, 1) 560ms both;
+}
+
+.v2[data-stage="settled"] .name-box::after {
+  animation: box-chip 220ms ease-out 760ms both;
+}
+
+@keyframes box-pop {
+  from {
+    transform: scale(0);
+  }
+}
+
+@keyframes box-chip {
+  from {
+    opacity: 0;
+  }
+}
+
+/* the box thickens a touch when the name can be pressed, or has focus */
+.v2[data-stage="settled"] .name:is(:hover, :focus-visible) .name-box {
+  box-shadow: 0 0 0 1px var(--blue);
+}
+
+.v2 .name-box i {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--blue);
+  background: #fff;
+}
+
+.v2 .name-box i:nth-child(1) {
+  left: -4px;
+  top: -4px;
+}
+
+.v2 .name-box i:nth-child(2) {
+  right: -4px;
+  top: -4px;
+}
+
+.v2 .name-box i:nth-child(3) {
+  left: -4px;
+  bottom: -4px;
+}
+
+.v2 .name-box i:nth-child(4) {
+  right: -4px;
+  bottom: -4px;
+}
+
+.v2 .name-box[data-size]::after {
+  content: attr(data-size);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 7px);
+  transform: translateX(-50%);
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: var(--blue);
+  color: #fff;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.v2 .rest {
+  margin-top: 1.6em;
+}
+
+.v2 .rest p + p {
+  margin-top: 1.1em;
+}
+
+.v2 .rest p {
+  text-wrap: pretty;
+}
+
+/*
+ * the ink isn't solid: text is run through a texture (see options.tsx). it's
+ * applied to whole runs of text, not word by word, so a selection is grainy
+ * all the way across with no seams between the words.
+ */
+.v2 .tx {
+  filter: var(--texture, none);
+}
+
+.v2 .w {
+  display: inline-block;
+}
+
+.texture-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/*
+ * the opening, stage one: the guides draw round the name, which isn't there
+ * yet. each word has a little room above and below (cancelled by a negative
+ * margin) so the colour that paints it in reaches the tails of letters like y.
+ */
+.v2 h1 .w {
+  padding: 0.2em 0;
+  margin: -0.2em 0;
+  color: transparent;
+}
+
+.v2 h1 .ink {
+  opacity: 0;
+}
+
+/* the name, and the mark drawn on it (see NameMarkDrawing) */
+.v2 .name {
+  cursor: pointer;
+  outline: none;
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.v2 .name-over {
+  position: absolute;
+  left: -0.24em;
+  top: -0.2em;
+  width: calc(100% + 0.48em);
+  height: calc(100% + 0.4em);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.v2 .name .sign {
+  padding-left: 0.18em;
+}
+
+/*
+ * stage two: the colour. every word of the name is painted by the same wide
+ * gradient (ink, then a band of colour, then nothing), offset by where the
+ * word sits, so sliding it reads as one band crossing the whole line and
+ * leaving ink behind. (the band is the one bharadwhat.com sweeps over its
+ * links on hover.)
+ */
+.v2:is([data-stage="sweep"], [data-stage="out"]) h1 .w {
+  background-image: linear-gradient(
+    90deg,
+    var(--ink) 0,
+    var(--ink) var(--lw),
+    lab(69 21.6 -14.7) calc(var(--lw) + var(--band) * 0.18),
+    lab(62.6 48 36.3) calc(var(--lw) + var(--band) * 0.36),
+    lab(78.8 12.4 59.6) calc(var(--lw) + var(--band) * 0.52),
+    lab(80.3 -0.3 -17.8) calc(var(--lw) + var(--band) * 0.68),
+    lab(58.7 1.8 -46.8) calc(var(--lw) + var(--band) * 0.84),
+    transparent calc(var(--lw) + var(--band)),
+    transparent 100%
+  );
+  background-size: calc(var(--lw) * 2 + var(--band)) 100%;
+  background-repeat: no-repeat;
+  background-position: calc(var(--o) - var(--x)) 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: sweep var(--line-ms) cubic-bezier(0.45, 0, 0.55, 1) both;
+  animation-delay: calc(var(--line) * var(--line-gap));
+}
+
+@keyframes sweep {
+  from {
+    --o: calc(-1 * (var(--lw) + var(--band)));
+  }
+  to {
+    --o: 0px;
+  }
+}
+
+/* the drawing wakes as the colour reaches it */
+.v2:is([data-stage="sweep"], [data-stage="out"]) h1 .ink {
+  animation: wake 260ms ease-out both;
+  animation-delay: calc(
+    var(--line) *
+    var(--line-gap) +
+    var(--line-ms) *
+    var(--xf)
+  );
+}
+
+@keyframes wake {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * meanwhile everything that isn't the name waits behind a fog, and comes
+ * into focus once the name is in (after justinschueler.com).
+ */
+.v2:is([data-stage="appear"], [data-stage="sweep"]) :is(.where, .rest) {
+  opacity: 0.2;
+  filter: blur(8px);
+}
+
+.v2[data-stage="out"] :is(.where, .rest) {
+  animation: unfog 560ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes unfog {
+  from {
+    opacity: 0.2;
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* once the opening is over, everything is ordinary again */
+.v2[data-stage="settled"] h1 :is(.w, .ink) {
+  animation: none;
+}
+
+.v2[data-stage="settled"] h1 .w {
+  color: inherit;
+}
+
+.v2[data-stage="settled"] h1 .ink {
+  opacity: 1;
+}
+
+/* links: a logo, then the name with a line under it */
+.v2 .lnk {
+  white-space: nowrap;
+}
+
+/*
+ * logos and drawings carry padding out to the edges of the line (cancelled by
+ * a negative margin, so nothing moves). it's what gets painted when they're
+ * inside a selection: see [data-picked] below.
+ */
+.v2 .logo {
+  display: inline-block;
+  box-sizing: content-box;
+  width: 0.92em;
+  height: 0.92em;
+  padding: 0.44em 0.3em 0.31em 0;
+  margin: -0.44em 0 -0.31em;
+  vertical-align: -0.12em;
+}
+
+.v2 .logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 22%;
+  object-fit: contain;
+}
+
+/* a one-colour shape used as a logo, tinted (the priceflag flag-bearer) */
+.v2 .mark {
+  display: inline-block;
+  padding: 0.32em 0.26em 0.23em 0;
+  margin: -0.32em 0 -0.23em;
+  vertical-align: -0.2em;
+}
+
+.v2 .mark > span {
+  display: block;
+  /* its width is set inline, per mark */
+  height: 1.12em;
+  background: var(--tint);
+  -webkit-mask: var(--shape) center / contain no-repeat;
+  mask: var(--shape) center / contain no-repeat;
+}
+
+/* a mark that is itself the word needs no gap after it */
+.v2 .mark:has(+ span > .sr-only) {
+  padding-right: 0;
+}
+
+.v2 .lnk .sign {
+  padding-right: 0.24em;
+}
+
+/* the line is a measurement, like the guides: capped at both ends, in cobalt */
+.v2 .lnk-t {
+  position: relative;
+}
+
+/* its length, written on the line (set by labelLinks in pages/index.tsx) */
+.v2[data-marks="guide"] .lnk-t[data-w]::after {
+  content: attr(data-w);
+  position: absolute;
+  left: 50%;
+  top: calc(100% - 3.5px);
+  transform: translate(-50%, -50%);
+  padding: 0 3px;
+  background: #fff;
+  color: var(--blue);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 8.5px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.v2[data-marks="guide"] .lnk-t {
+  --line: var(--blue);
+  padding-bottom: 0.1em;
+  background:
+    linear-gradient(var(--line), var(--line)) 0 100% / 1px 7px no-repeat,
+    linear-gradient(var(--line), var(--line)) 100% 100% / 1px 7px no-repeat,
+    linear-gradient(var(--line), var(--line)) 0 calc(100% - 3px) / 100% 1px
+    no-repeat;
+}
+
+/* or a pencil stroke, each one drawn differently (see sketch.tsx) */
+.v2[data-marks="sketch"] .lnk-t {
+  padding-bottom: 0.1em;
+  background: var(--pen) 0 100% / 100% 0.34em no-repeat;
+}
+
+/* drawn signs that sit in a line of text */
+.v2 .sign {
+  display: inline-block;
+  box-sizing: content-box;
+  height: 1em;
+  padding: 0.4em 0.08em 0.27em;
+  margin: -0.4em 0 -0.27em;
+  vertical-align: -0.16em;
+  overflow: visible;
+}
+
+/*
+ * inside a selection: the same cobalt, run through the same texture as the
+ * text around it, with drawings turning white like the letters do.
+ */
+.v2 :is(.logo, .mark, .sign)[data-picked] {
+  background: var(--blue);
+  filter: var(--texture, none);
+}
+
+/* the browser would lay its own dark tint over a selected image */
+.v2 .logo img {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.v2 .coords[data-picked] {
+  background: var(--blue);
+  color: #fff;
+  filter: var(--texture, none);
+}
+
+/* the cobalt lines, their numbers and the box step aside for a highlight */
+.v2[data-marks="guide"] .lnk-t[data-picked] {
+  --line: transparent;
+}
+
+.v2 :is(.lnk-t, .name-box)[data-picked]::after {
+  display: none;
+}
+
+.v2 .name-box[data-picked] {
+  border-color: transparent;
+}
+
+.v2 .name-box[data-picked] i {
+  opacity: 0;
+}
+
+.v2 :is(.sign, .name-over)[data-picked] path {
+  stroke: #fff;
+}
+
+.v2 .sign[data-picked] text {
+  fill: #fff;
+}
+
+.v2 .mark[data-picked] > span {
+  background: #fff;
+}
+
+.v2 h1 .sign {
+  height: 0.8em;
+  vertical-align: -0.06em;
+}
+
+.v2 .net .sign {
+  padding-right: 0.22em;
+}
+
+/*
+ * the socials (see components/dock.tsx): one phrase, with the logos fanning
+ * out above it on hover and swelling under the pointer. while they're out,
+ * everything else on the page drops back into a blur.
+ */
+.v2 .net {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  outline: none;
+  cursor: default;
+}
+
+.v2 :is(.fade, .net) {
+  transition:
+    filter 280ms ease,
+    opacity 280ms ease;
+}
+
+.v2[data-stage="settled"]:has(
+    .net:is(:hover, :focus-visible, :has(:focus-visible))
+  )
+  .fade {
+  filter: blur(3px);
+  opacity: 0.55;
+}
+
+/* and more lightly while a link's screenshot is up, all but that link */
+.v2[data-peek] :is(.fade:not(:hover), .net) {
+  filter: blur(1.6px);
+  opacity: 0.7;
+}
+
+.v2 .dock {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.34em;
+  /* the padding keeps the pointer inside on its way up from the phrase */
+  padding: 1em 0.8em 0.5em;
+  /* --shift keeps it inside the window; see keepDockInView */
+  transform: translateX(calc(-50% + var(--shift, 0px)));
+  pointer-events: none;
+}
+
+.v2:not([data-stage="settled"]) .dock {
+  display: none;
+}
+
+.v2 .net:is(:hover, :focus-visible, :has(:focus-visible)) .dock {
+  pointer-events: auto;
+}
+
+.v2 .dock-item {
+  /* eased frame by frame in dock.tsx, so no transition on the size here */
+  --s: 1;
+  /* no focus box round a clicked icon: its name above it is the cue */
+  outline: none;
+  position: relative;
+  flex: none;
+  width: calc(2.3em * var(--s));
+  height: calc(2.3em * var(--s));
+  opacity: 0;
+  /* closed: stacked on the middle of the phrase, small */
+  transform: translate(var(--from), 1.7em) scale(0.2);
+  transition:
+    transform 260ms cubic-bezier(0.5, 0, 0.7, 0.4),
+    opacity 180ms ease;
+}
+
+.v2 .net:is(:hover, :focus-visible, :has(:focus-visible)) .dock-item {
+  opacity: 1;
+  transform: none;
+  /* the springy curve overshoots, so they settle rather than stop */
+  transition:
+    transform 460ms cubic-bezier(0.3, 1.55, 0.5, 1) var(--wait),
+    opacity 160ms ease var(--wait);
+}
+
+/* a soft white haze behind the row, so the marks read over blurred text */
+.v2 .dock::before {
+  content: "";
+  position: absolute;
+  inset: 0.5em 0 0;
+  border-radius: 999px;
+  background: #fff;
+  filter: blur(10px);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.v2 .net:is(:hover, :focus-visible, :has(:focus-visible)) .dock::before {
+  opacity: 0.92;
+}
+
+.v2 .dock-item .social {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  overflow: visible;
+}
+
+/* keep the pen the same weight however big it swells */
+.v2 .dock-item .social path {
+  vector-effect: non-scaling-stroke;
+}
+
+.v2 .dock-label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.5em);
+  transform: translateX(-50%);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.v2 .dock-item:is([data-near], :focus-visible) .dock-label {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* the horse and the bridge                                            */
+/* ------------------------------------------------------------------ */
+
+/* somewhere for the horse to run (see scenes.tsx) */
+.v2 .scene {
+  position: absolute;
+  z-index: -1;
+  inset: auto 0 0;
+  height: calc(var(--u) * var(--tall) * 1px);
+  overflow: hidden;
+  pointer-events: none;
+  /* its own layer, painted once while the guides are still on screen */
+  contain: layout paint;
+}
+
+/* it arrives the way it was made: drawn across from the left. a sheet of
+   the page's white lies over it, soft along its leading edge, and slides
+   off to the right. only the sheet moves, so nothing under it is repainted */
+.v2 .scene::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0 0 0 -140px;
+  background: linear-gradient(90deg, transparent, #fff 140px);
+  will-change: transform;
+  transition: transform 2800ms cubic-bezier(0.45, 0.05, 0.25, 1) 300ms;
+}
+
+.v2 .scene[data-show]::after {
+  transform: translateX(100%);
+}
+
+/* copies of one drawing side by side, slid along by the page */
+.v2 .scene-strip {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  height: 100%;
+  will-change: translate;
+}
+
+.v2 .scene-strip svg {
+  flex: none;
+  display: block;
+  height: 100%;
+  overflow: visible;
+}
+
+/* the horse and anything that rides along with her */
+.v2 .rider {
+  position: absolute;
+  left: 0;
+  bottom: calc(var(--u) * (var(--ground) - 1.5) * 1px);
+  visibility: hidden;
+}
+
+.v2 .rider[data-here] {
+  visibility: visible;
+}
+
+.v2 .rider {
+  transform-origin: 50% 100%;
+}
+
+/* how to make her jump, until you have */
+.v2 .rider-hint,
+.v2 .rider-count {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 5px);
+  translate: -50% 0;
+  padding: 1px 5px 2px;
+  border-radius: 2px;
+  background: var(--blue);
+  color: #fff;
+  font:
+    600 9px / 1.3 var(--font-mono),
+    ui-monospace,
+    monospace;
+  white-space: nowrap;
+}
+
+.v2 .rider-hint {
+  opacity: 0;
+  animation: hint-in 500ms ease 5200ms forwards;
+}
+
+.v2 .rider-hint::after {
+  content: "space to jump";
+}
+
+@media (hover: none) {
+  .v2 .rider-hint::after {
+    content: "tap to jump";
+  }
+}
+
+.v2 .scene[data-jumped] .rider-hint {
+  display: none;
+}
+
+@keyframes hint-in {
+  to {
+    opacity: 1;
+  }
+}
+
+/* how many she has cleared in a row */
+.v2 .rider-count:not([data-n]),
+.v2 .rider-count[data-n="00"] {
+  display: none;
+}
+
+.v2 .rider-count::after {
+  content: "cleared " attr(data-n);
+}
+
+/* a pumpkin in the road; knocked, it goes over */
+.v2 .hurdle {
+  position: absolute;
+  left: 0;
+  bottom: calc(var(--u) * (var(--ground) - 0.5) * 1px);
+  width: calc(var(--u) * 15px);
+  margin-left: calc(var(--u) * -7.5px);
+  translate: -200px;
+  overflow: visible;
+  transform-origin: 50% 100%;
+  transition: rotate 320ms cubic-bezier(0.4, 0, 0.9, 0.6);
+  will-change: translate;
+}
+
+.v2 .hurdle[data-down] {
+  rotate: 84deg;
+}
+
+/* autumn: leaves coming down, blown back the way she came */
+.v2 .leaves {
+  position: absolute;
+  inset: 0;
+  --drop: calc(var(--u) * var(--tall) * 1px);
+  pointer-events: none;
+}
+
+.v2 .leaf {
+  position: absolute;
+  top: -30px;
+  left: var(--x);
+  width: calc(var(--u) * var(--s));
+  animation: leaf-fall var(--d) linear var(--delay) infinite;
+  will-change: translate;
+}
+
+.v2 .leaf svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+  animation: leaf-turn var(--w) ease-in-out infinite alternate;
+}
+
+@keyframes leaf-fall {
+  to {
+    translate: var(--blow) calc(var(--drop) + 60px);
+  }
+}
+
+@keyframes leaf-turn {
+  from {
+    rotate: -55deg;
+    translate: -9px 0;
+  }
+  to {
+    rotate: 65deg;
+    translate: 9px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2 .leaf,
+  .v2 .leaf svg {
+    animation: none;
+  }
+}
+
+.v2 .rider .horse {
+  display: block;
+  height: calc(var(--u) * 42px);
+  aspect-ratio: 300 / 204;
+  background: url(/images/horse.png) 0 0 / 1200% 100% no-repeat;
+  /* printed with the same worn ink as the text */
+  filter: var(--texture, none);
+}
+
+/* ------------------------------------------------------------------ */
+/* the measuring guides (see components/ruler-intro.tsx)               */
+/* ------------------------------------------------------------------ */
+
+.rl {
+  --ease: cubic-bezier(0.7, 0, 0.2, 1);
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  color: var(--blue);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.rl > * {
+  position: fixed;
+}
+
+/* guides grow from one edge of the window and leave by the other */
+.rl-v {
+  top: 0;
+  width: 1px;
+  height: 100vh;
+  background: currentColor;
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 620ms var(--ease);
+}
+
+.rl-h {
+  left: 0;
+  width: 100vw;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 620ms var(--ease);
+}
+
+.rl[data-phase="in"] .rl-v,
+.rl[data-phase="in"] .rl-h {
+  transform: none;
+}
+
+.rl[data-phase="out"] .rl-v {
+  transform-origin: bottom;
+}
+
+.rl[data-phase="out"] .rl-h {
+  transform-origin: right;
+}
+
+/* tick marks: a short one every 8px, a long one every 40 */
+.rl-ticks {
+  opacity: 0.9;
+  transition: transform 520ms var(--ease);
+}
+
+.rl-ticks-top {
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 12px;
+  background:
+    repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 40px) 0
+    0 / 100% 12px no-repeat,
+    repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 8px) 0
+    0 / 100% 5px no-repeat;
+  transform: translateY(-100%);
+}
+
+.rl-ticks-left {
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 100vh;
+  background:
+    repeating-linear-gradient(180deg, currentColor 0 1px, transparent 1px 40px)
+    0 0 / 12px 100% no-repeat,
+    repeating-linear-gradient(180deg, currentColor 0 1px, transparent 1px 8px) 0
+    0 / 5px 100% no-repeat;
+  transform: translateX(-100%);
+}
+
+.rl[data-phase="in"] .rl-ticks {
+  transform: none;
+}
+
+/* everything else fades in once the guides have crossed */
+.rl-hatch,
+.rl-cross,
+.rl-dim,
+.rl-note {
+  opacity: 0;
+  transition: opacity 260ms ease;
+}
+
+.rl[data-phase="in"] .rl-hatch,
+.rl[data-phase="in"] .rl-cross,
+.rl[data-phase="in"] .rl-dim,
+.rl[data-phase="in"] .rl-note {
+  opacity: 1;
+  transition-delay: 380ms;
+}
+
+.rl[data-phase="in"] .rl-hatch {
+  opacity: 0.32;
+}
+
+.rl-hatch {
+  background: repeating-linear-gradient(
+    135deg,
+    currentColor 0 1px,
+    transparent 1px 7px
+  );
+}
+
+.rl-cross {
+  width: 13px;
+  height: 13px;
+  margin: -6px 0 0 -6px;
+  background:
+    linear-gradient(currentColor, currentColor) 50% 50% / 100% 1px no-repeat,
+    linear-gradient(currentColor, currentColor) 50% 50% / 1px 100% no-repeat;
+}
+
+/* a dimension: a line capped at both ends, with its length in the middle */
+.rl-dim {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rl-dim span {
+  position: relative;
+  padding: 3px 6px;
+  background: #fff;
+}
+
+.rl-dim-h {
+  height: 9px;
+  border-inline: 1px solid currentColor;
+  background:
+    linear-gradient(currentColor, currentColor) 50% 50% / 100% 1px no-repeat;
+}
+
+.rl-dim-v {
+  width: 9px;
+  margin-left: -4px;
+  border-block: 1px solid currentColor;
+  background:
+    linear-gradient(currentColor, currentColor) 50% 50% / 1px 100% no-repeat;
+}
+
+.rl-dim-v span {
+  padding: 5px 3px;
+}
+
+.rl-note {
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ */
+/* the hover screenshot (see components/pixel-preview.tsx)             */
+/* ------------------------------------------------------------------ */
+
+.preview {
+  position: fixed;
+  z-index: 30;
+  pointer-events: none;
+  padding: 4px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow:
+    0 0 0 0.5px rgb(0 0 0 / 0.14),
+    0 1px 2px rgb(0 0 0 / 0.06),
+    0 10px 28px rgb(0 0 0 / 0.14);
+  opacity: 0;
+  transform: scale(0.96) translateY(4px);
+  /* it leans after the pointer (see `follow`), trailing it a little */
+  translate: var(--dx, 0px) var(--dy, 0px);
+  rotate: var(--tilt, 0deg);
+  transition:
+    opacity 110ms ease,
+    transform 110ms ease,
+    translate 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    rotate 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.preview[data-show] {
+  opacity: 1;
+  transform: none;
+  transition-duration: 160ms, 160ms, 120ms, 120ms;
+}
+
+.preview canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2 .scene::after {
+    transition: none;
+  }
+}
+
+/* a phone on its side: little height, so the text moves up clear of the
+   scene, and in a window too short for both the scene steps aside */
+@media (max-height: 520px) {
+  .v2 {
+    padding-top: 12px;
+    padding-bottom: calc(var(--u) * 150px);
+  }
+}
+
+@media (max-height: 330px) {
+  .v2 {
+    padding-bottom: 12px;
+  }
+
+  .v2 .scene {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* the page that isn't there (see pages/404.tsx)                       */
+/* ------------------------------------------------------------------ */
+
+/* no opening here: the box and its handles are simply drawn */
+.v2.lost .name-box,
+.v2.lost .name-box i,
+.v2.lost .name-box::after {
+  animation: none;
+}
